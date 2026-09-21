@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 # Directorio de legajos
-UPLOAD_DIR = "legajos_documentacion"
+UPLOAD_DIR = "legajos_documentacion_2027"
 if not os.path.exists(UPLOAD_DIR):
   os.makedirs(UPLOAD_DIR)
 
@@ -33,11 +33,13 @@ def cargar_datos():
             "DNI Tutor",
             "Teléfono",
             "Email",
-            "DNI Alumna/Tutor (Adjunto)",
-            "Partida Nacimiento (Adjunto)",
-            "CUS (Adjunto)",
+            "Ficha de Matrícula (Adjunto)",
+            "Libre de Deuda (Adjunto)",
+            "Pago Matrícula (Adjunto)",
             "ISA (Adjunto)",
-            "Autorización Retiro (Adjunto)",
+            "CUS (Adjunto)",
+            "Autorización Uso Imagen (Adjunto)",
+            "Acta Compromiso y Constancia DJ (Adjunto)",
             "Estado Documentación",
             "Ruta Carpeta Legajo",
         ]
@@ -62,8 +64,8 @@ df_inscripciones = cargar_datos()
 if menu == "Formulario de Matrícula":
   st.title("🎓 Formulario de Matrícula - Ciclo Lectivo 2027")
   st.markdown(
-      "Complete los datos correspondientes a la alumna y adjunte la"
-      " documentación requerida para formalizar la preinscripción."
+      "Complete los datos correspondientes a la alumna y adjunte toda la"
+      " documentación obligatoria requerida para formalizar la inscripción."
   )
 
   with st.form("form_matricula"):
@@ -94,36 +96,46 @@ if menu == "Formulario de Matrícula":
       telefono = st.text_input("Teléfono de Contacto")
       email = st.text_input("Correo Electrónico")
 
-    st.subheader("3. Documentación Requerida (Archivos Obligatorios)")
+    st.subheader(
+        "3. Documentación Requerida (Archivos en formato PDF o Imagen)"
+    )
     st.markdown(
-        "Por favor, suba cada uno de los documentos solicitados en formato PDF"
-        " o imagen legible."
+        "Por favor, suba cada uno de los siguientes comprobantes y fichas"
+        " obligatorias:"
     )
 
-    f_dni = st.file_uploader(
-        "Copia de DNI (Alumna y Tutor/a)",
+    f_ficha = st.file_uploader(
+        "1. Ficha de Matrícula",
         type=["pdf", "png", "jpg", "jpeg"],
-        key="dni",
+        key="ficha",
     )
-    f_partida = st.file_uploader(
-        "Partida de Nacimiento",
-        type=["pdf", "png", "jpg", "jpeg"],
-        key="partida",
+    f_libre = st.file_uploader(
+        "2. Libre de Deuda", type=["pdf", "png", "jpg", "jpeg"], key="libre"
     )
-    f_cus = st.file_uploader(
-        "CUS (Certificado Único de Salud)",
+    f_pago = st.file_uploader(
+        "3. Comprobante de Pago de Matrícula",
         type=["pdf", "png", "jpg", "jpeg"],
-        key="cus",
+        key="pago",
     )
     f_isa = st.file_uploader(
-        "ISA (Informe de Salud del Adolescente / Ficha Médica)",
+        "4. ISA (Informe de Salud del Adolescente / Ficha Médica)",
         type=["pdf", "png", "jpg", "jpeg"],
         key="isa",
     )
-    f_aut = st.file_uploader(
-        "Autorización de Retiro y Normas de Convivencia",
+    f_cus = st.file_uploader(
+        "5. CUS (Certificado Único de Salud)",
         type=["pdf", "png", "jpg", "jpeg"],
-        key="aut",
+        key="cus",
+    )
+    f_img = st.file_uploader(
+        "6. Autorización Uso de Imagen",
+        type=["pdf", "png", "jpg", "jpeg"],
+        key="img",
+    )
+    f_acta = st.file_uploader(
+        "7. Acta Compromiso y Constancia DJ",
+        type=["pdf", "png", "jpg", "jpeg"],
+        key="acta",
     )
 
     enviar = st.form_submit_button("Enviar Matrícula")
@@ -151,16 +163,17 @@ if menu == "Formulario de Matrícula":
             return "Entregado"
           return "Pendiente"
 
-        s_dni = guardar_archivo(f_dni, "DNI")
-        s_partida = guardar_archivo(f_partida, "Partida_Nacimiento")
-        s_cus = guardar_archivo(f_cus, "CUS")
+        s_ficha = guardar_archivo(f_ficha, "Ficha_Matricula")
+        s_libre = guardar_archivo(f_libre, "Libre_Deuda")
+        s_pago = guardar_archivo(f_pago, "Pago_Matricula")
         s_isa = guardar_archivo(f_isa, "ISA")
-        s_aut = guardar_archivo(f_aut, "Autorizacion_Retiro")
+        s_cus = guardar_archivo(f_cus, "CUS")
+        s_img = guardar_archivo(f_img, "Autorizacion_Uso_Imagen")
+        s_acta = guardar_archivo(f_acta, "Acta_Compromiso_Constancia_DJ")
 
         # Verificar si entregó todo
-        docs_pendientes = [s_dni, s_partida, s_cus, s_isa, s_aut].count(
-            "Pendiente"
-        )
+        lista_estados = [s_ficha, s_libre, s_pago, s_isa, s_cus, s_img, s_acta]
+        docs_pendientes = lista_estados.count("Pendiente")
         estado_general = (
             "Completo ✅" if docs_pendientes == 0 else "Incompleto ⚠️"
         )
@@ -174,11 +187,13 @@ if menu == "Formulario de Matrícula":
             "DNI Tutor": [dni_tutor],
             "Teléfono": [telefono],
             "Email": [email],
-            "DNI Alumna/Tutor (Adjunto)": [s_dni],
-            "Partida Nacimiento (Adjunto)": [s_partida],
-            "CUS (Adjunto)": [s_cus],
+            "Ficha de Matrícula (Adjunto)": [s_ficha],
+            "Libre de Deuda (Adjunto)": [s_libre],
+            "Pago Matrícula (Adjunto)": [s_pago],
             "ISA (Adjunto)": [s_isa],
-            "Autorización Retiro (Adjunto)": [s_aut],
+            "CUS (Adjunto)": [s_cus],
+            "Autorización Uso Imagen (Adjunto)": [s_img],
+            "Acta Compromiso y Constancia DJ (Adjunto)": [s_acta],
             "Estado Documentación": [estado_general],
             "Ruta Carpeta Legajo": [carpeta_alumna],
         })
