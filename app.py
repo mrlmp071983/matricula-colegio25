@@ -1,18 +1,18 @@
+import io
 import os
 import zipfile
-import io
 import pandas as pd
 import streamlit as st
 
-# Configuración de la página y diseño estético inicial
+# Configuración de la página
 st.set_page_config(
     page_title="Matrícula Colegio 25 de Mayo", page_icon="🎓", layout="wide"
 )
 
-# Directorio donde se guardarán los archivos subidos por los padres
+# Directorio de legajos
 UPLOAD_DIR = "legajos_documentacion"
 if not os.path.exists(UPLOAD_DIR):
-    os.makedirs(UPLOAD_DIR)
+  os.makedirs(UPLOAD_DIR)
 
 EXCEL_FILE = "inscripciones_colegio25.xlsx"
 
@@ -41,9 +41,9 @@ def guardar_datos(df):
   df.to_excel(EXCEL_FILE, index=False)
 
 
-# Barra lateral de navegación
-st.sidebar.image("logo.png", width=120, use_column_width=False)
+# Barra lateral
 st.sidebar.title("Colegio 25 de Mayo")
+st.sidebar.markdown("---")
 menu = st.sidebar.selectbox(
     "Menú de Navegación",
     ["Formulario de Matrícula", "Panel de Control (Administrador)"],
@@ -88,8 +88,8 @@ if menu == "Formulario de Matrícula":
 
     st.subheader("3. Documentación Requerida")
     st.markdown(
-        "Por favor, adjunte la documentación en formato digital (PDF, Foto de"
-        " DNI, Partida de Nacimiento, Ficha Médica, etc.)."
+        "Adjunte la documentación digital (PDF, Foto de DNI, Partida, Ficha"
+        " Médica, etc.)."
     )
     archivo_subido = st.file_uploader(
         "Subir Archivo de Documentación", type=["pdf", "png", "jpg", "jpeg"]
@@ -115,7 +115,6 @@ if menu == "Formulario de Matrícula":
           with open(ruta_guardado, "wb") as f:
             f.write(archivo_subido.getbuffer())
 
-        # Registrar inscripción
         nueva_fila = pd.DataFrame({
             "Fecha": [pd.Timestamp.now().strftime("%Y-%m-%d %H:%M")],
             "Nombre Alumna": [nombre_alumna],
@@ -155,15 +154,8 @@ elif menu == "Panel de Control (Administrador)":
           df_inscripciones.drop(columns=["Ruta Archivo"], errors="ignore")
       )
 
-      # Sección de Gestión / Eliminación de Inscripciones
       st.markdown("---")
       st.subheader("🗑️ Gestión de Bajas (Eliminar Inscripción)")
-      st.markdown(
-          "Seleccione una alumna de la lista si desea darla de baja y borrar"
-          " todos sus registros y documentos asociados."
-      )
-
-      # Creamos opciones legibles para el selector (Nombre + DNI)
       opciones_alumnas = [
           f"{row['Nombre Alumna']} (DNI: {row['DNI Alumna']})"
           for index, row in df_inscripciones.iterrows()
@@ -174,10 +166,7 @@ elif menu == "Panel de Control (Administrador)":
       )
 
       if st.button("Eliminar Registro de Alumna Seleccionada", type="primary"):
-        # Encontrar el índice correspondiente
         indice_seleccionado = opciones_alumnas.index(alumna_a_eliminar)
-
-        # Verificar si tiene un archivo asociado y borrarlo del disco
         ruta_archivo = df_inscripciones.loc[
             indice_seleccionado, "Ruta Archivo"
         ]
@@ -188,22 +177,19 @@ elif menu == "Panel de Control (Administrador)":
         ):
           try:
             os.remove(ruta_archivo)
-          except Exception as e:
-            st.warning(f"No se pudo eliminar el archivo físico: {e}")
+          except:
+            pass
 
-        # Eliminar la fila del DataFrame
         df_inscripciones = df_inscripciones.drop(indice_seleccionado).reset_index(
             drop=True
         )
         guardar_datos(df_inscripciones)
-
         st.success(
-            f"Se ha eliminado correctamente a la alumna y su documentación del"
-            f" sistema."
+            "Se ha eliminado correctamente a la alumna y su documentación del"
+            " sistema."
         )
-        st.experimental_rerun()  # Actualiza la vista
+        st.rerun()
 
-      # Descargar planilla Excel y Legajos
       st.markdown("---")
       st.markdown("### Descargar Reportes y Documentación")
       col_d1, col_d2 = st.columns(2)
