@@ -6,7 +6,9 @@ import streamlit as st
 
 # Configuración de la página
 st.set_page_config(
-    page_title="Matrícula Colegio 25 de Mayo", page_icon="🎓", layout="wide"
+    page_title="Matrícula Colegio 25 de Mayo - 2027",
+    page_icon="🎓",
+    layout="wide",
 )
 
 # Directorio de legajos
@@ -14,7 +16,7 @@ UPLOAD_DIR = "legajos_documentacion"
 if not os.path.exists(UPLOAD_DIR):
   os.makedirs(UPLOAD_DIR)
 
-EXCEL_FILE = "inscripciones_colegio25.xlsx"
+EXCEL_FILE = "inscripciones_colegio25_2027.xlsx"
 
 
 def cargar_datos():
@@ -31,8 +33,13 @@ def cargar_datos():
             "DNI Tutor",
             "Teléfono",
             "Email",
-            "Documentación Entregada",
-            "Ruta Archivo",
+            "DNI Alumna/Tutor (Adjunto)",
+            "Partida Nacimiento (Adjunto)",
+            "CUS (Adjunto)",
+            "ISA (Adjunto)",
+            "Autorización Retiro (Adjunto)",
+            "Estado Documentación",
+            "Ruta Carpeta Legajo",
         ]
     )
 
@@ -43,6 +50,7 @@ def guardar_datos(df):
 
 # Barra lateral
 st.sidebar.title("Colegio 25 de Mayo")
+st.sidebar.markdown("### Ciclo Lectivo 2027")
 st.sidebar.markdown("---")
 menu = st.sidebar.selectbox(
     "Menú de Navegación",
@@ -52,10 +60,10 @@ menu = st.sidebar.selectbox(
 df_inscripciones = cargar_datos()
 
 if menu == "Formulario de Matrícula":
-  st.title("🎓 Formulario de Matrícula - Ciclo Lectivo")
+  st.title("🎓 Formulario de Matrícula - Ciclo Lectivo 2027")
   st.markdown(
       "Complete los datos correspondientes a la alumna y adjunte la"
-      " documentación requerida."
+      " documentación requerida para formalizar la preinscripción."
   )
 
   with st.form("form_matricula"):
@@ -86,13 +94,36 @@ if menu == "Formulario de Matrícula":
       telefono = st.text_input("Teléfono de Contacto")
       email = st.text_input("Correo Electrónico")
 
-    st.subheader("3. Documentación Requerida")
+    st.subheader("3. Documentación Requerida (Archivos Obligatorios)")
     st.markdown(
-        "Adjunte la documentación digital (PDF, Foto de DNI, Partida, Ficha"
-        " Médica, etc.)."
+        "Por favor, suba cada uno de los documentos solicitados en formato PDF"
+        " o imagen legible."
     )
-    archivo_subido = st.file_uploader(
-        "Subir Archivo de Documentación", type=["pdf", "png", "jpg", "jpeg"]
+
+    f_dni = st.file_uploader(
+        "Copia de DNI (Alumna y Tutor/a)",
+        type=["pdf", "png", "jpg", "jpeg"],
+        key="dni",
+    )
+    f_partida = st.file_uploader(
+        "Partida de Nacimiento",
+        type=["pdf", "png", "jpg", "jpeg"],
+        key="partida",
+    )
+    f_cus = st.file_uploader(
+        "CUS (Certificado Único de Salud)",
+        type=["pdf", "png", "jpg", "jpeg"],
+        key="cus",
+    )
+    f_isa = st.file_uploader(
+        "ISA (Informe de Salud del Adolescente / Ficha Médica)",
+        type=["pdf", "png", "jpg", "jpeg"],
+        key="isa",
+    )
+    f_aut = st.file_uploader(
+        "Autorización de Retiro y Normas de Convivencia",
+        type=["pdf", "png", "jpg", "jpeg"],
+        key="aut",
     )
 
     enviar = st.form_submit_button("Enviar Matrícula")
@@ -100,20 +131,39 @@ if menu == "Formulario de Matrícula":
     if enviar:
       if not nombre_alumna or not dni_alumna or not telefono:
         st.error(
-            "Por favor, complete al menos los campos obligatorios de la"
-            " alumna y teléfono."
+            "Por favor, complete al menos los campos obligatorios: Apellidos y"
+            " Nombres de la Alumna, DNI y Teléfono."
         )
       else:
-        ruta_guardado = ""
-        if archivo_subido is not None:
-          extension = archivo_subido.name.split(".")[-1]
-          nombre_archivo_limpio = (
-              f"{dni_alumna}_{nombre_alumna.replace(' ', '_')}.{extension}"
-          )
-          ruta_guardado = os.path.join(UPLOAD_DIR, nombre_archivo_limpio)
+        # Crear subcarpeta específica para la alumna dentro de legajos
+        carpeta_alumna = os.path.join(
+            UPLOAD_DIR, f"{dni_alumna}_{nombre_alumna.replace(' ', '_')}"
+        )
+        if not os.path.exists(carpeta_alumna):
+          os.makedirs(carpeta_alumna)
 
-          with open(ruta_guardado, "wb") as f:
-            f.write(archivo_subido.getbuffer())
+        def guardar_archivo(archivo, nombre_base):
+          if archivo is not None:
+            ext = archivo.name.split(".")[-1]
+            path = os.path.join(carpeta_alumna, f"{nombre_base}.{ext}")
+            with open(path, "wb") as f:
+              f.write(archivo.getbuffer())
+            return "Entregado"
+          return "Pendiente"
+
+        s_dni = guardar_archivo(f_dni, "DNI")
+        s_partida = guardar_archivo(f_partida, "Partida_Nacimiento")
+        s_cus = guardar_archivo(f_cus, "CUS")
+        s_isa = guardar_archivo(f_isa, "ISA")
+        s_aut = guardar_archivo(f_aut, "Autorizacion_Retiro")
+
+        # Verificar si entregó todo
+        docs_pendientes = [s_dni, s_partida, s_cus, s_isa, s_aut].count(
+            "Pendiente"
+        )
+        estado_general = (
+            "Completo ✅" if docs_pendientes == 0 else "Incompleto ⚠️"
+        )
 
         nueva_fila = pd.DataFrame({
             "Fecha": [pd.Timestamp.now().strftime("%Y-%m-%d %H:%M")],
@@ -124,10 +174,13 @@ if menu == "Formulario de Matrícula":
             "DNI Tutor": [dni_tutor],
             "Teléfono": [telefono],
             "Email": [email],
-            "Documentación Entregada": [
-                "Sí (Adjunta)" if archivo_subido else "Pendiente"
-            ],
-            "Ruta Archivo": [ruta_guardado],
+            "DNI Alumna/Tutor (Adjunto)": [s_dni],
+            "Partida Nacimiento (Adjunto)": [s_partida],
+            "CUS (Adjunto)": [s_cus],
+            "ISA (Adjunto)": [s_isa],
+            "Autorización Retiro (Adjunto)": [s_aut],
+            "Estado Documentación": [estado_general],
+            "Ruta Carpeta Legajo": [carpeta_alumna],
         })
 
         df_inscripciones = pd.concat(
@@ -136,26 +189,48 @@ if menu == "Formulario de Matrícula":
         guardar_datos(df_inscripciones)
 
         st.success(
-            "¡Matrícula enviada y registrada correctamente con su"
-            " documentación!"
+            "¡Matrícula para el Ciclo Lectivo 2027 enviada y registrada con"
+            " éxito!"
         )
 
 elif menu == "Panel de Control (Administrador)":
   st.title("🔒 Panel de Control - Administración Colegio 25 de Mayo")
-
   password = st.text_input("Ingrese la clave de administrador", type="password")
 
-  if password == "colegio25":
+  if password == "secundaria2027":
     st.success("Acceso autorizado")
 
-    st.subheader("Listado de Alumnas Inscriptas")
+    st.subheader("📋 Listado General de Alumnas Inscriptas (Ciclo 2027)")
     if not df_inscripciones.empty:
-      st.dataframe(
-          df_inscripciones.drop(columns=["Ruta Archivo"], errors="ignore")
+      # Mostrar métricas rápidas
+      total_inscriptas = len(df_inscripciones)
+      completas = len(
+          df_inscripciones[
+              df_inscripciones["Estado Documentación"] == "Completo ✅"
+          ]
       )
+      incompletas = total_inscriptas - completas
+
+      col_m1, col_m2, col_m3 = st.columns(3)
+      col_m1.metric("Total Inscriptas", total_inscriptas)
+      col_m2.metric("Documentación Completa ✅", completas)
+      col_m3.metric("Documentación Incompleta ⚠️", incompletas)
 
       st.markdown("---")
+
+      # Mostrar tabla principal sin la ruta interna
+      st.dataframe(
+          df_inscripciones.drop(columns=["Ruta Carpeta Legajo"], errors="ignore")
+      )
+
+      # Sección de Gestión / Eliminación de Inscripciones (Bajas)
+      st.markdown("---")
       st.subheader("🗑️ Gestión de Bajas (Eliminar Inscripción)")
+      st.markdown(
+          "Seleccione una alumna si cambió de institución para borrar todos"
+          " sus registros y archivos asociados."
+      )
+
       opciones_alumnas = [
           f"{row['Nombre Alumna']} (DNI: {row['DNI Alumna']})"
           for index, row in df_inscripciones.iterrows()
@@ -167,40 +242,39 @@ elif menu == "Panel de Control (Administrador)":
 
       if st.button("Eliminar Registro de Alumna Seleccionada", type="primary"):
         indice_seleccionado = opciones_alumnas.index(alumna_a_eliminar)
-        ruta_archivo = df_inscripciones.loc[
-            indice_seleccionado, "Ruta Archivo"
+        ruta_carpeta = df_inscripciones.loc[
+            indice_seleccionado, "Ruta Carpeta Legajo"
         ]
-        if (
-            pd.notna(ruta_archivo)
-            and ruta_archivo != ""
-            and os.path.exists(ruta_archivo)
-        ):
+
+        # Borrar archivos físicos de la carpeta si existen
+        if pd.notna(ruta_carpeta) and os.path.exists(ruta_carpeta):
           try:
-            os.remove(ruta_archivo)
-          except:
-            pass
+            for root, dirs, files in os.walk(ruta_carpeta, topdown=False):
+              for file in files:
+                os.remove(os.path.join(root, file))
+              os.rmdir(root)
+          except Exception as e:
+            st.warning(f"No se pudo borrar completamente la carpeta: {e}")
 
         df_inscripciones = df_inscripciones.drop(indice_seleccionado).reset_index(
             drop=True
         )
         guardar_datos(df_inscripciones)
-        st.success(
-            "Se ha eliminado correctamente a la alumna y su documentación del"
-            " sistema."
-        )
+        st.success("Se ha eliminado la alumna y sus legajos correctamente.")
         st.rerun()
 
+      # Descarga de Reportes y Legajos
       st.markdown("---")
-      st.markdown("### Descargar Reportes y Documentación")
+      st.markdown("### 📥 Descargar Reportes y Documentación")
       col_d1, col_d2 = st.columns(2)
 
       with col_d1:
         if os.path.exists(EXCEL_FILE):
           with open(EXCEL_FILE, "rb") as f:
             st.download_button(
-                label="📊 Descargar Planilla Excel de Inscriptos",
+                label="📊 Descargar Planilla Excel (Ciclo 2027)",
                 data=f,
-                file_name="inscripciones_colegio_25.xlsx",
+                file_name="inscripciones_colegio25_2027.xlsx",
                 mime=(
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 ),
@@ -222,9 +296,9 @@ elif menu == "Panel de Control (Administrador)":
           zip_buffer.seek(0)
 
           st.download_button(
-              label="📁 Descargar Todos los Legajos (ZIP)",
+              label="📁 Descargar Todos los Legajos en ZIP",
               data=zip_buffer,
-              file_name="legajos_digitales_alumnas.zip",
+              file_name="legajos_digitales_ciclo_2027.zip",
               mime="application/zip",
           )
         else:
@@ -233,7 +307,9 @@ elif menu == "Panel de Control (Administrador)":
           )
 
     else:
-      st.info("Aún no hay registros de inscripción.")
+      st.info("Aún no hay registros de inscripción para el ciclo 2027.")
 
   elif password != "":
-    st.error("Contraseña incorrecta. La clave por defecto es: colegio25")
+    st.error(
+        "Contraseña incorrecta. La clave de administrador es: secundaria2027"
+    )
