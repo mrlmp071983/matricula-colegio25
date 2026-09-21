@@ -217,7 +217,6 @@ elif menu == "Panel de Control (Administrador)":
 
     st.subheader("📋 Listado General de Alumnas Inscriptas (Ciclo 2027)")
     if not df_inscripciones.empty:
-      # Mostrar métricas rápidas
       total_inscriptas = len(df_inscripciones)
       completas = len(
           df_inscripciones[
@@ -232,13 +231,10 @@ elif menu == "Panel de Control (Administrador)":
       col_m3.metric("Documentación Incompleta ⚠️", incompletas)
 
       st.markdown("---")
-
-      # Mostrar tabla principal sin la ruta interna
       st.dataframe(
           df_inscripciones.drop(columns=["Ruta Carpeta Legajo"], errors="ignore")
       )
 
-      # Sección de Gestión / Eliminación de Inscripciones (Bajas)
       st.markdown("---")
       st.subheader("🗑️ Gestión de Bajas (Eliminar Inscripción)")
       st.markdown(
@@ -261,7 +257,6 @@ elif menu == "Panel de Control (Administrador)":
             indice_seleccionado, "Ruta Carpeta Legajo"
         ]
 
-        # Borrar archivos físicos de la carpeta si existen
         if pd.notna(ruta_carpeta) and os.path.exists(ruta_carpeta):
           try:
             for root, dirs, files in os.walk(ruta_carpeta, topdown=False):
@@ -278,7 +273,6 @@ elif menu == "Panel de Control (Administrador)":
         st.success("Se ha eliminado la alumna y sus legajos correctamente.")
         st.rerun()
 
-      # Descarga de Reportes y Legajos
       st.markdown("---")
       st.markdown("### 📥 Descargar Reportes y Documentación")
       col_d1, col_d2 = st.columns(2)
@@ -298,8 +292,9 @@ elif menu == "Panel de Control (Administrador)":
       with col_d2:
         if os.path.exists(UPLOAD_DIR) and os.listdir(UPLOAD_DIR):
           zip_buffer = io.BytesIO()
+          # Corrección aplicada aquí: modo "w" correcto para zipfile
           with zipfile.ZipFile(
-              zip_buffer, "zip", zipfile.ZIP_DEFLATED
+              zip_buffer, "w", zipfile.ZIP_DEFLATED
           ) as zip_file:
             for foldername, subfolders, filenames in os.walk(UPLOAD_DIR):
               for filename in filenames:
