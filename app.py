@@ -11,7 +11,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Directorio de legajos
+# Directorio principal de legajos
 UPLOAD_DIR = "legajos_documentacion_2027"
 if not os.path.exists(UPLOAD_DIR):
   os.makedirs(UPLOAD_DIR)
@@ -28,7 +28,7 @@ def cargar_datos():
             "Fecha",
             "Nombre Alumna",
             "DNI Alumna",
-            "Año a Cursar",
+            "Curso y División",
             "Nombre Tutor",
             "DNI Tutor",
             "Teléfono",
@@ -75,15 +75,22 @@ if menu == "Formulario de Matrícula":
       nombre_alumna = st.text_input("Apellidos y Nombres de la Alumna")
       dni_alumna = st.text_input("DNI de la Alumna")
     with col2:
-      anio_cursar = st.selectbox(
-          "Año a Cursar",
+      # Definición de cursos con divisiones A y B del 1° al 6° año
+      curso_division = st.selectbox(
+          "Curso y División",
           [
-              "1° Año",
-              "2° Año",
-              "3° Año",
-              "4° Año",
-              "5° Año",
-              "6° Año (Orientado)",
+              "1° Año - División A",
+              "1° Año - División B",
+              "2° Año - División A",
+              "2° Año - División B",
+              "3° Año - División A",
+              "3° Año - División B",
+              "4° Año - División A",
+              "4° Año - División B",
+              "5° Año - División A",
+              "5° Año - División B",
+              "6° Año - División A",
+              "6° Año - División B",
           ],
       )
 
@@ -147,10 +154,17 @@ if menu == "Formulario de Matrícula":
             " Nombres de la Alumna, DNI y Teléfono."
         )
       else:
-        # Crear subcarpeta específica para la alumna dentro de legajos
-        carpeta_alumna = os.path.join(
-            UPLOAD_DIR, f"{dni_alumna}_{nombre_alumna.replace(' ', '_')}"
+        # Estructurar la carpeta por curso/división y alumna para el orden en el ZIP
+        nombre_carpeta_curso = (
+            curso_division.replace("° ", "_")
+            .replace(" - ", "_")
+            .replace(" ", "_")
         )
+        subfolder_curso = os.path.join(UPLOAD_DIR, nombre_carpeta_curso)
+        carpeta_alumna = os.path.join(
+            subfolder_curso, f"{dni_alumna}_{nombre_alumna.replace(' ', '_')}"
+        )
+
         if not os.path.exists(carpeta_alumna):
           os.makedirs(carpeta_alumna)
 
@@ -182,7 +196,7 @@ if menu == "Formulario de Matrícula":
             "Fecha": [pd.Timestamp.now().strftime("%Y-%m-%d %H:%M")],
             "Nombre Alumna": [nombre_alumna],
             "DNI Alumna": [dni_alumna],
-            "Año a Cursar": [anio_cursar],
+            "Curso y División": [curso_division],
             "Nombre Tutor": [nombre_tutor],
             "DNI Tutor": [dni_tutor],
             "Teléfono": [telefono],
@@ -243,7 +257,7 @@ elif menu == "Panel de Control (Administrador)":
       )
 
       opciones_alumnas = [
-          f"{row['Nombre Alumna']} (DNI: {row['DNI Alumna']})"
+          f"{row['Nombre Alumna']} (DNI: {row['DNI Alumna']}) - {row['Curso y División']}"
           for index, row in df_inscripciones.iterrows()
       ]
 
@@ -292,7 +306,6 @@ elif menu == "Panel de Control (Administrador)":
       with col_d2:
         if os.path.exists(UPLOAD_DIR) and os.listdir(UPLOAD_DIR):
           zip_buffer = io.BytesIO()
-          # Corrección aplicada aquí: modo "w" correcto para zipfile
           with zipfile.ZipFile(
               zip_buffer, "w", zipfile.ZIP_DEFLATED
           ) as zip_file:
@@ -306,9 +319,12 @@ elif menu == "Panel de Control (Administrador)":
           zip_buffer.seek(0)
 
           st.download_button(
-              label="📁 Descargar Todos los Legajos en ZIP",
+              label=(
+                  "📁 Descargar Todos los Legajos Ordenados por Curso y"
+                  " División (ZIP)"
+              ),
               data=zip_buffer,
-              file_name="legajos_digitales_ciclo_2027.zip",
+              file_name="legajos_por_cursos_ciclo_2027.zip",
               mime="application/zip",
           )
         else:
