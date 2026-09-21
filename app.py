@@ -33,6 +33,8 @@ def cargar_datos():
             "DNI Tutor",
             "Teléfono",
             "Email",
+            "Partida de Nacimiento (Adjunto)",
+            "Documento DNI (Adjunto)",
             "Ficha de Matrícula (Adjunto)",
             "Libre de Deuda (Adjunto)",
             "Pago Matrícula (Adjunto)",
@@ -50,8 +52,10 @@ def guardar_datos(df):
   df.to_excel(EXCEL_FILE, index=False)
 
 
-# Barra lateral
+# Barra lateral con Logo e Información
 st.sidebar.title("Colegio 25 de Mayo")
+if os.path.exists("logo.png"):
+  st.sidebar.image("logo.png", use_container_width=True)
 st.sidebar.markdown("### Ciclo Lectivo 2027")
 st.sidebar.markdown("---")
 menu = st.sidebar.selectbox(
@@ -111,36 +115,44 @@ if menu == "Formulario de Matrícula":
         " obligatorias:"
     )
 
+    f_partida = st.file_uploader(
+        "1. Partida de Nacimiento",
+        type=["pdf", "png", "jpg", "jpeg"],
+        key="partida",
+    )
+    f_dni_doc = st.file_uploader(
+        "2. Documento (DNI)", type=["pdf", "png", "jpg", "jpeg"], key="dnidoc"
+    )
     f_ficha = st.file_uploader(
-        "1. Ficha de Matrícula",
+        "3. Ficha de Matrícula",
         type=["pdf", "png", "jpg", "jpeg"],
         key="ficha",
     )
     f_libre = st.file_uploader(
-        "2. Libre de Deuda", type=["pdf", "png", "jpg", "jpeg"], key="libre"
+        "4. Libre de Deuda", type=["pdf", "png", "jpg", "jpeg"], key="libre"
     )
     f_pago = st.file_uploader(
-        "3. Comprobante de Pago de Matrícula",
+        "5. Comprobante de Pago de Matrícula",
         type=["pdf", "png", "jpg", "jpeg"],
         key="pago",
     )
     f_isa = st.file_uploader(
-        "4. ISA (Informe de Salud del Adolescente / Ficha Médica)",
+        "6. ISA (Informe de Salud del Adolescente / Ficha Médica)",
         type=["pdf", "png", "jpg", "jpeg"],
         key="isa",
     )
     f_cus = st.file_uploader(
-        "5. CUS (Certificado Único de Salud)",
+        "7. CUS (Certificado Único de Salud)",
         type=["pdf", "png", "jpg", "jpeg"],
         key="cus",
     )
     f_img = st.file_uploader(
-        "6. Autorización Uso de Imagen",
+        "8. Autorización Uso de Imagen",
         type=["pdf", "png", "jpg", "jpeg"],
         key="img",
     )
     f_acta = st.file_uploader(
-        "7. Acta Compromiso y Constancia DJ",
+        "9. Acta Compromiso y Constancia DJ",
         type=["pdf", "png", "jpg", "jpeg"],
         key="acta",
     )
@@ -177,6 +189,8 @@ if menu == "Formulario de Matrícula":
             return "Entregado"
           return "Pendiente"
 
+        s_partida = guardar_archivo(f_partida, "Partida_Nacimiento")
+        s_dni_doc = guardar_archivo(f_dni_doc, "Documento_DNI")
         s_ficha = guardar_archivo(f_ficha, "Ficha_Matricula")
         s_libre = guardar_archivo(f_libre, "Libre_Deuda")
         s_pago = guardar_archivo(f_pago, "Pago_Matricula")
@@ -186,7 +200,17 @@ if menu == "Formulario de Matrícula":
         s_acta = guardar_archivo(f_acta, "Acta_Compromiso_Constancia_DJ")
 
         # Verificar si entregó todo
-        lista_estados = [s_ficha, s_libre, s_pago, s_isa, s_cus, s_img, s_acta]
+        lista_estados = [
+            s_partida,
+            s_dni_doc,
+            s_ficha,
+            s_libre,
+            s_pago,
+            s_isa,
+            s_cus,
+            s_img,
+            s_acta,
+        ]
         docs_pendientes = lista_estados.count("Pendiente")
         estado_general = (
             "Completo ✅" if docs_pendientes == 0 else "Incompleto ⚠️"
@@ -201,6 +225,8 @@ if menu == "Formulario de Matrícula":
             "DNI Tutor": [dni_tutor],
             "Teléfono": [telefono],
             "Email": [email],
+            "Partida de Nacimiento (Adjunto)": [s_partida],
+            "Documento DNI (Adjunto)": [s_dni_doc],
             "Ficha de Matrícula (Adjunto)": [s_ficha],
             "Libre de Deuda (Adjunto)": [s_libre],
             "Pago Matrícula (Adjunto)": [s_pago],
