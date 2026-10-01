@@ -166,15 +166,22 @@ if modo == "Portal de Familias (Inscripción)":
     nivel_elegido = st.selectbox(
         "Seleccione el Nivel Educativo",
         ["Nivel Inicial", "Nivel Primario", "Nivel Secundario"],
+        key="select_nivel_educativo",
     )
 
-    # CORRECCIÓN CLAVE: Selección dinámica limpia y adaptada según el nivel elegido
+    # CORRECCIÓN DEFINITIVA CON KEYS ÚNICOS Y ETIQUETAS DINÁMICAS ADECUADAS
     if nivel_elegido == "Nivel Inicial":
-      sala_grado_curso = st.selectbox("Sala / División", SALAS_INICIAL)
+      sala_grado_curso = st.selectbox(
+          "Sala / División", SALAS_INICIAL, key="select_sala_inicial"
+      )
     elif nivel_elegido == "Nivel Primario":
-      sala_grado_curso = st.selectbox("Grado / División", GRADOS_PRIMARIA)
+      sala_grado_curso = st.selectbox(
+          "Grado / División", GRADOS_PRIMARIA, key="select_grado_primaria"
+      )
     else:
-      sala_grado_curso = st.selectbox("Curso / División", CURSOS_SECUNDARIA)
+      sala_grado_curso = st.selectbox(
+          "Curso / División", CURSOS_SECUNDARIA, key="select_curso_secundaria"
+      )
 
     dni_tutor = st.text_input(
         "DNI y Apellido del Padre / Madre / Tutor responsable"
@@ -190,31 +197,43 @@ if modo == "Portal de Familias (Inscripción)":
     col1, col2 = st.columns(2)
     with col1:
       f_partida = st.file_uploader(
-          "Partida de Nacimiento", type=["pdf", "png", "jpg"]
+          "Partida de Nacimiento",
+          type=["pdf", "png", "jpg"],
+          key="up_partida",
       )
       f_dni_doc = st.file_uploader(
-          "Documento (DNI)", type=["pdf", "png", "jpg"]
+          "Documento (DNI)", type=["pdf", "png", "jpg"], key="up_dni"
       )
       f_matricula = st.file_uploader(
-          "Ficha de Matrícula", type=["pdf", "png", "jpg"]
+          "Ficha de Matrícula", type=["pdf", "png", "jpg"], key="up_ficha"
       )
       f_libre_deuda = st.file_uploader(
-          "Libre de Deuda", type=["pdf", "png", "jpg"]
+          "Libre de Deuda", type=["pdf", "png", "jpg"], key="up_libre"
       )
       f_pago = st.file_uploader(
-          "Comprobante de Pago de Matrícula", type=["pdf", "png", "jpg"]
+          "Comprobante de Pago de Matrícula",
+          type=["pdf", "png", "jpg"],
+          key="up_pago",
       )
     with col2:
-      f_isa = st.file_uploader("ISA", type=["pdf", "png", "jpg"])
+      f_isa = st.file_uploader("ISA", type=["pdf", "png", "jpg"], key="up_isa")
       f_cus = st.file_uploader(
-          "CUS (Certificado Único de Salud)", type=["pdf", "png", "jpg"]
+          "CUS (Certificado Único de Salud)",
+          type=["pdf", "png", "jpg"],
+          key="up_cus",
       )
       f_imagen = st.file_uploader(
-          "Autorización Uso de Imagen", type=["pdf", "png", "jpg"]
+          "Autorización Uso de Imagen",
+          type=["pdf", "png", "jpg"],
+          key="up_imagen",
       )
-      f_acta = st.file_uploader("Acta Compromiso", type=["pdf", "png", "jpg"])
+      f_acta = st.file_uploader(
+          "Acta Compromiso", type=["pdf", "png", "jpg"], key="up_acta"
+      )
       f_dj = st.file_uploader(
-          "Constancia Declaración Jurada (DJ)", type=["pdf", "png", "jpg"]
+          "Constancia Declaración Jurada (DJ)",
+          type=["pdf", "png", "jpg"],
+          key="up_dj",
       )
 
     st.markdown("---")
@@ -333,6 +352,7 @@ else:
   password = st.text_input(
       f"Ingrese la contraseña de administración ({filtro_nivel}):",
       type="password",
+      key=f"pass_{prefijo_archivo}",
   )
 
   if password == password_correcto:
@@ -358,7 +378,9 @@ else:
 
       # Filtro interno por sección
       selector_seccion = st.selectbox(
-          "Filtrar por sección específica:", ["Todas"] + sub_opciones
+          "Filtrar por sección específica:",
+          ["Todas"] + sub_opciones,
+          key=f"filtro_seccion_{prefijo_archivo}",
       )
       if selector_seccion != "Todas":
         df_nivel = df_nivel[df_nivel["Sala_Grado_Curso"] == selector_seccion]
@@ -371,10 +393,14 @@ else:
       alumna_a_borrar = st.selectbox(
           "Seleccione un estudiante para eliminar su registro si es necesario:",
           ["Seleccione..."] + nombres_alumnos,
+          key=f"del_{prefijo_archivo}",
       )
 
       if alumna_a_borrar != "Seleccione...":
-        if st.button("Eliminar Registro Seleccionado"):
+        if st.button(
+            "Eliminar Registro Seleccionado",
+            key=f"btn_del_{prefijo_archivo}",
+        ):
           indice_real = df_nivel[
               df_nivel["Estudiante"] == alumna_a_borrar
           ].index[0]
@@ -417,6 +443,7 @@ else:
             mime=(
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             ),
+            key=f"dl_excel_{prefijo_archivo}",
         )
 
       with col_d2:
@@ -444,6 +471,7 @@ else:
               data=zip_buffer,
               file_name=f"legajos_{prefijo_archivo}_2027.zip",
               mime="application/zip",
+              key=f"dl_zip_{prefijo_archivo}",
           )
         else:
           st.info(
