@@ -39,7 +39,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Definición de opciones por Nivel
+# Definición de opciones por Nivel con sus respectivas divisiones A y B
 SALAS_INICIAL = [
     "Sala de 3 Años - División A",
     "Sala de 3 Años - División B",
@@ -168,6 +168,7 @@ if modo == "Portal de Familias (Inscripción)":
         ["Nivel Inicial", "Nivel Primario", "Nivel Secundario"],
     )
 
+    # CORRECCIÓN CLAVE: Selección dinámica limpia y adaptada según el nivel elegido
     if nivel_elegido == "Nivel Inicial":
       sala_grado_curso = st.selectbox("Sala / División", SALAS_INICIAL)
     elif nivel_elegido == "Nivel Primario":
@@ -374,7 +375,6 @@ else:
 
       if alumna_a_borrar != "Seleccione...":
         if st.button("Eliminar Registro Seleccionado"):
-          # Ubicar el índice original en el dataframe general
           indice_real = df_nivel[
               df_nivel["Estudiante"] == alumna_a_borrar
           ].index[0]
@@ -382,7 +382,6 @@ else:
               alumna_a_borrar.strip().replace(" ", "_").replace(",", "")
           )
 
-          # Borrar archivos físicos asociados
           for foldername, subfolders, filenames in os.walk(UPLOAD_DIR):
             for filename in filenames:
               if filename.startswith(nombre_limpio):
@@ -406,7 +405,6 @@ else:
       col_d1, col_d2 = st.columns(2)
 
       with col_d1:
-        # Generar Excel temporal exclusivo de este nivel para la descarga
         buffer_excel = io.BytesIO()
         with pd.ExcelWriter(buffer_excel, engine="openpyxl") as writer:
           df_nivel.to_excel(writer, index=False, sheet_name=filtro_nivel)
