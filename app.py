@@ -157,31 +157,35 @@ if modo == "Portal de Familias (Inscripción)":
       " documentación obligatoria solicitada para el **Ciclo Lectivo 2027**."
   )
 
+  st.markdown("### 1. Datos Generales")
+
+  # Selector de Nivel FUERA del formulario para garantizar reactividad inmediata en pantalla
+  nivel_elegido = st.selectbox(
+      "Seleccione el Nivel Educativo",
+      ["Nivel Inicial", "Nivel Primario", "Nivel Secundario"],
+      key="select_nivel_educativo_reactivo",
+  )
+
+  # Determinación dinámica de opciones según el nivel seleccionado
+  if nivel_elegido == "Nivel Inicial":
+    label_opcion = "Sala / División"
+    opciones_disponibles = SALAS_INICIAL
+  elif nivel_elegido == "Nivel Primario":
+    label_opcion = "Grado / División"
+    opciones_disponibles = GRADOS_PRIMARIA
+  else:
+    label_opcion = "Curso / División"
+    opciones_disponibles = CURSOS_SECUNDARIA
+
   with st.form("form_matricula"):
-    st.markdown("### 1. Datos Generales")
     nombre_estudiante = st.text_input(
         "Apellidos y Nombres del Estudiante (Tal como figura en DNI)"
     )
 
-    nivel_elegido = st.selectbox(
-        "Seleccione el Nivel Educativo",
-        ["Nivel Inicial", "Nivel Primario", "Nivel Secundario"],
-        key="select_nivel_educativo",
+    # Selector dependiente que ahora se refresca de forma limpia
+    sala_grado_curso = st.selectbox(
+        label_opcion, opciones_disponibles, key="select_opcion_dinamica"
     )
-
-    # CORRECCIÓN DEFINITIVA CON KEYS ÚNICOS Y ETIQUETAS DINÁMICAS ADECUADAS
-    if nivel_elegido == "Nivel Inicial":
-      sala_grado_curso = st.selectbox(
-          "Sala / División", SALAS_INICIAL, key="select_sala_inicial"
-      )
-    elif nivel_elegido == "Nivel Primario":
-      sala_grado_curso = st.selectbox(
-          "Grado / División", GRADOS_PRIMARIA, key="select_grado_primaria"
-      )
-    else:
-      sala_grado_curso = st.selectbox(
-          "Curso / División", CURSOS_SECUNDARIA, key="select_curso_secundaria"
-      )
 
     dni_tutor = st.text_input(
         "DNI y Apellido del Padre / Madre / Tutor responsable"
